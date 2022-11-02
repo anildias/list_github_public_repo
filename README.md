@@ -7,6 +7,6 @@ ruby myapp.rb
 Listening on http://127.0.0.1:4567
 
 ## How to run test suite
-rspec rspec app_test.rb
+rspec app_test.rb
 
 
