@@ -1,6 +1,6 @@
 require 'sinatra'
 require 'httparty'
-require 'active_support/core_ext'
+require 'active_support'
 
 GITHUB_API = "https://api.github.com/search/repositories".freeze
 #
