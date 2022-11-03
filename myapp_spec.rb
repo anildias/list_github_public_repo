@@ -36,11 +36,10 @@ describe 'myapp' do
       }
     ]
   }
-
-  let(:error) {
-
+  let(:api_error) {
     {'errors' => { 'error' => 'keyword should enter' }, 'message' => 'validation failed'}
   }
+  let(:unexpected_error) { "Something unexpected, could not get any results, please try again" }
 
   it 'it takes to root_path' do
     get '/'
@@ -78,12 +77,33 @@ describe 'myapp' do
 
   context 'valid keywords were not given' do
     it 'return with an error hash' do
-      allow(HTTParty).to receive(:get).and_return(error)
+      allow(HTTParty).to receive(:get).and_return(api_error)
       params = { search: '' } 
       get '/search', params: params
 
-      last_response.body.include?("#{error['message']}")
-      last_response.body.include?("#{error['errors']}")
+      last_response.body.include?("#{api_error['message']}")
+      last_response.body.include?("#{api_error['errors']}")
     end
-  end 
+  end
+
+  context 'response were something else unexpected' do
+    it 'shows error if api response was nil' do
+      allow(HTTParty).to receive(:get).and_return(nil)
+      params = { search: search_keyword } 
+      get '/search', params: params
+
+      last_response.body.include?("error")
+      last_response.body.include?(unexpected_error)
+    end
+
+    it 'shows error if api response contains any other data set' do
+      allow(HTTParty).to receive(:get).and_return({ 'data' => 'unexpected' })
+      params = { search: search_keyword } 
+      get '/search', params: params
+
+      last_response.body.include?("error")
+      last_response.body.include?(unexpected_error)
+      last_response.body.include?("{'data' => 'unexpected'}")
+    end
+  end
 end

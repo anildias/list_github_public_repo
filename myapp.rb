@@ -3,6 +3,19 @@ require 'httparty'
 require 'active_support/core_ext'
 
 #
+# helpers
+#
+helpers do
+  def error(opts = {})
+    body = "<h1>error!</h1>"
+    body << "<p> Something unexpected, could not get any results, please try again<p>"
+    body << "<p> error_log: #{opts[:message]} <p>" if opts[:message]
+    body << "\n <a href='/'>back to search</a>"
+    body
+  end
+end
+
+#
 # root_path 
 # where we sdearch for the keywords
 #
@@ -27,7 +40,13 @@ end
 get('/search') do
   page = params[:page].to_i || 1
   response = HTTParty.get("https://api.github.com/search/repositories?q=#{params[:search]}&page=#{page}")
-  if response['errors'].present?
+  unless response.present?
+    return error(message: 'response was empty')
+  end
+  unless response['errors'].present? && response['total_count']
+    return error(message: response)
+  end
+  if response['errors'].present? 
     body = "<h1>error!</h1>"
     body << "<p> #{response['message']} - #{response['errors']} </p>\n"
     body << "\n <a href='/'>back to search</a>"
@@ -53,7 +72,6 @@ get('/search') do
       body << "<li><a href='#{item['html_url']}'>visit repo</a> </li>"
       body << "</ul>"
     end
-
   end
   body
 end
