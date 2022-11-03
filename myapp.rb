@@ -2,6 +2,7 @@ require 'sinatra'
 require 'httparty'
 require 'active_support/core_ext'
 
+GITHUB_API = "https://api.github.com/search/repositories".freeze
 #
 # helpers
 #
@@ -38,12 +39,12 @@ end
 #   in that case we show total count with message showing no items to display
 #
 get('/search') do
-  page = params[:page].to_i || 1
-  response = HTTParty.get("https://api.github.com/search/repositories?q=#{params[:search]}&page=#{page}")
+  page = params[:page].to_i <= 0 ? 1 : params[:page].to_i
+  response = HTTParty.get("#{GITHUB_API}?q=#{params[:search]}&page=#{page}")
   unless response.present?
     return error(message: 'response was empty')
   end
-  unless response['errors'].present? && response['total_count']
+  if response['errors'].blank? && response['total_count'].blank?
     return error(message: response)
   end
   if response['errors'].present? 
@@ -68,8 +69,8 @@ get('/search') do
       body << "<li>ID: #{item['id']} </li>"
       body << "<li>Fullname: #{item['full_name']} </li>"
       body << "<li>Desc: #{item['description']} </li>"
-      body << "<li>Owner: #{item['owner']['login']}</li>"
-      body << "<li><a href='#{item['html_url']}'>visit repo</a> </li>"
+      body << "<li>Owner: #{item['owner']['login']} </li>" if item['owner']
+      body << "<li><a href='#{item['html_url']}'>visit repo</a> </li>" if item['html_url']
       body << "</ul>"
     end
   end
